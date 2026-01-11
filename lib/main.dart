@@ -6,8 +6,8 @@ void main() {
 
 // ------------------- THEME & CONSTANTS -------------------
 const Color kPrimaryColor = Color(0xFFD0FD3E); // Lime Green
-const Color kBackgroundColor = Color(0xFF1C1C1E); // Dark Grey
-const Color kSurfaceColor = Colors.white;
+const Color kBackgroundColor = Color(0xFF121212); // Deep Dark Background
+const Color kCardColor = Color(0xFF1C1C1E); // Slightly lighter for cards
 const double kPadding = 20.0;
 
 class GymMachineApp extends StatelessWidget {
@@ -20,12 +20,17 @@ class GymMachineApp extends StatelessWidget {
       title: 'Gym Machine Guide',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(seedColor: kPrimaryColor),
+        scaffoldBackgroundColor: kBackgroundColor,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kPrimaryColor, 
+          brightness: Brightness.dark
+        ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+          backgroundColor: kBackgroundColor,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
+          centerTitle: true,
+          iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
       home: const BodyMapScreen(),
@@ -33,70 +38,115 @@ class GymMachineApp extends StatelessWidget {
   }
 }
 
-// ------------------- 1. BODY MAP SCREEN (Custom Asset) -------------------
-class BodyMapScreen extends StatelessWidget {
+// ------------------- 1. BODY MAP SCREEN (HOME) -------------------
+class BodyMapScreen extends StatefulWidget {
   const BodyMapScreen({super.key});
 
   @override
+  State<BodyMapScreen> createState() => _BodyMapScreenState();
+}
+
+class _BodyMapScreenState extends State<BodyMapScreen> {
+  // 0 = Anterior (Front), 1 = Posterior (Back)
+  int _currentViewIndex = 0; 
+
+  @override
   Widget build(BuildContext context) {
+    final bool isAnterior = _currentViewIndex == 0;
+
     return Scaffold(
+      // Moved Profile and Search to AppBar because BottomBar is used for toggles
       appBar: AppBar(
+        toolbarHeight: 80,
+        leading: IconButton(
+          icon: const Icon(Icons.search, color: Colors.grey),
+          onPressed: () {},
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.grey),
+            onPressed: () {},
+          )
+        ],
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text("Good Morning,", style: TextStyle(fontSize: 14, color: Colors.grey)),
-            Text("User", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+             Text(
+              isAnterior ? "ANTERIOR VIEW" : "POSTERIOR VIEW", 
+              style: const TextStyle(
+                fontSize: 12, 
+                letterSpacing: 1.5,
+                color: Colors.grey, 
+                fontWeight: FontWeight.w600
+              )
+            ),
+            const SizedBox(height: 5),
+             Text(
+              isAnterior ? "FRONT MUSCLES" : "BACK MUSCLES", 
+              style: const TextStyle(
+                fontSize: 28, 
+                fontFamily: 'Impact', 
+                fontWeight: FontWeight.w900, 
+                color: Colors.white,
+                letterSpacing: 1.0,
+              )
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: const CommonBottomBar(currentIndex: 1),
+      
+      // CUSTOM BOTTOM BAR FOR VIEW TOGGLING
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: kBackgroundColor,
+          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentViewIndex,
+          onTap: (index) {
+            setState(() {
+              _currentViewIndex = index;
+            });
+          },
+          selectedItemColor: kPrimaryColor,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: kBackgroundColor,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.accessibility), 
+              label: 'Anterior', 
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.accessibility_new), 
+              label: 'Posterior', 
+            ),
+          ],
+        ),
+      ),
+
       body: Center(
-        // CORRECTED: AspectRatio is a widget that wraps the content
         child: AspectRatio(
-          aspectRatio: 1, // Adjust this number (Width / Height) to match your image
+          aspectRatio: 1, 
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 20),
             child: Stack(
               fit: StackFit.expand, 
               children: [
-                // 1. YOUR CUSTOM IMAGE
+                // 1. IMAGE SWITCHER
                 Image.asset(
-                  'musclegroup.png',
+                  isAnterior ? 'frontmuscle.png' : 'backmuscle.png', 
                   fit: BoxFit.fill,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[900], 
+                      child: const Center(child: Text("Image Missing (Check Assets)", style: TextStyle(color: Colors.white)))
+                    );
+                  },
                 ),
 
-                // 2. RESPONSIVE BUTTONS (Using Alignment)
-                // (0,0) is center. (-1,-1) is top-left. (1,1) is bottom-right.
-                
-                // CHEST (Red)
-                const Align(
-                  alignment: Alignment(0.0, -0.55),
-                  child: MuscleTag(label: "Chest", isActive: true),
-                ),
-
-                // SHOULDERS (Green)
-                const Align(
-                  alignment: Alignment(-0.65, -0.65),
-                  child: MuscleTag(label: "Shoulders", isActive: false),
-                ),
-
-                // ARMS (Blue)
-                const Align(
-                  alignment: Alignment(0.75, -0.2),
-                  child: MuscleTag(label: "Arms", isActive: false),
-                ),
-
-                // ABS (Purple)
-                const Align(
-                  alignment: Alignment(0.0, -0.05),
-                  child: MuscleTag(label: "Abs", isActive: false),
-                ),
-
-                // LEGS (Pink/Blue)
-                const Align(
-                  alignment: Alignment(0.4, 0.65),
-                  child: MuscleTag(label: "Legs", isActive: false),
-                ),
+                // 2. MUSCLE TAGS (Switches based on state)
+                if (isAnterior) ..._buildAnteriorTags() else ..._buildPosteriorTags(),
               ],
             ),
           ),
@@ -104,8 +154,91 @@ class BodyMapScreen extends StatelessWidget {
       ),
     );
   }
+
+  // --- List of Buttons for Front View ---
+  List<Widget> _buildAnteriorTags() {
+    return const [
+      //NOTES: Alignment(LEFT/RIGHT,UP/BOTTOM)
+      Align(
+        alignment: Alignment(-0.85, -0.68),
+        child: MuscleTag(label: "Chest", isActive: true),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.46),
+        child: MuscleTag(label: "Side Shoulders", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.27),
+        child: MuscleTag(label: "Biceps", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.08),
+        child: MuscleTag(label: "Arms", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(-0.85, 0.35),
+        child: MuscleTag(label: "Quads", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, -0.70),
+        child: MuscleTag(label: "Shoulders", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, -0.15), 
+        child: MuscleTag(label: "Abs", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, 0.7),
+        child: MuscleTag(label: "Legs", isActive: false),
+      ),
+    ];
+  }
+
+  // --- List of Buttons for Back View ---
+  List<Widget> _buildPosteriorTags() {
+    return const [
+      //NOTES: Alignment(LEFT/RIGHT,UP/BOTTOM)
+      Align(
+        alignment: Alignment(-0.85, -0.68),
+        child: MuscleTag(label: "Upper back", isActive: true),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.46),
+        child: MuscleTag(label: "Rear Shoulders", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.27),
+        child: MuscleTag(label: "Triceps", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(-0.85, -0.08),
+        child: MuscleTag(label: "Lower Back", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, -0.70),
+        child: MuscleTag(label: "Middle Back", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, -0.48),
+        child: MuscleTag(label: "Lats", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, -0.15), 
+        child: MuscleTag(label: "Glutes", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, 0.38),
+        child: MuscleTag(label: "Hamstrings", isActive: false),
+      ),
+      Align(
+        alignment: Alignment(0.85, 0.7),
+        child: MuscleTag(label: "Calves", isActive: false),
+      ),
+    ];
+  }
 }
 
+// ------------------- HELPER WIDGET -------------------
 // ------------------- HELPER WIDGET -------------------
 class MuscleTag extends StatelessWidget {
   final String label;
@@ -125,49 +258,54 @@ class MuscleTag extends StatelessWidget {
           : () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("$label workouts coming soon!"), 
+                  content: Text("$label workouts coming soon!", style: const TextStyle(color: Colors.black)), 
                   duration: const Duration(milliseconds: 800),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: const Color(0xFF1C1C1E),
+                  backgroundColor: kPrimaryColor, 
                 ),
               );
             },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        // 1. ADD FIXED WIDTH HERE
+        width: 110, 
+        
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? kPrimaryColor : Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20),
+          color: isActive ? kPrimaryColor : kCardColor.withOpacity(0.9), 
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isActive ? Colors.black : Colors.transparent, 
-            width: 1.5
+            color: isActive ? kPrimaryColor : Colors.grey.withOpacity(0.3), 
+            width: 1.0
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          // 2. CENTER THE CONTENT INSIDE THE FIXED WIDTH
+          mainAxisAlignment: MainAxisAlignment.center, 
           children: [
             if (isActive) ...[
               const Icon(Icons.check_circle, size: 14, color: Colors.black),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isActive ? Colors.black : Colors.black87,
+            // 3. WRAP TEXT IN FLEXIBLE TO PREVENT OVERFLOW ON SMALL BUTTONS
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  color: isActive ? Colors.black : Colors.white, 
+                  overflow: TextOverflow.ellipsis, // Adds "..." if text is too long
+                ),
               ),
             ),
-            if (!isActive) ...[
-              const SizedBox(width: 5),
-              Container(width: 5, height: 5, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
-            ]
           ],
         ),
       ),
@@ -175,7 +313,7 @@ class MuscleTag extends StatelessWidget {
   }
 }
 
-// ------------------- 2. MACHINE LIST SCREEN (CATEGORY) -------------------
+// ------------------- 2. MACHINE LIST SCREEN (RESTORED) -------------------
 class MachineListScreen extends StatelessWidget {
   const MachineListScreen({super.key});
 
@@ -183,10 +321,13 @@ class MachineListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Chest", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-        centerTitle: false,
+        title: const Text("CHEST WORKOUT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1)),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      bottomNavigationBar: const CommonBottomBar(currentIndex: 1),
       body: Padding(
         padding: const EdgeInsets.all(kPadding),
         child: GridView.count(
@@ -197,12 +338,12 @@ class MachineListScreen extends StatelessWidget {
           children: [
             _buildMachineCard(
               context, 
-              "Machine 1", 
+              "Chest Press", 
               "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop"
             ),
             _buildMachineCard(
               context, 
-              "Machine 2", 
+              "Pec Fly", 
               "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop"
             ),
             _buildMachineCard(
@@ -212,7 +353,7 @@ class MachineListScreen extends StatelessWidget {
             ),
             _buildMachineCard(
               context, 
-              "Cable Fly", 
+              "Cable Cross", 
               "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=2069&auto=format&fit=crop"
             ),
           ],
@@ -228,11 +369,12 @@ class MachineListScreen extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: kCardColor, // Dark card
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )
@@ -251,7 +393,7 @@ class MachineListScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
             ),
           ],
@@ -261,22 +403,20 @@ class MachineListScreen extends StatelessWidget {
   }
 }
 
-// ------------------- 3. DETAIL SCREEN -------------------
+// ------------------- 3. DETAIL SCREEN (RESTORED) -------------------
 class MachineDetailScreen extends StatelessWidget {
   const MachineDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("Machine 1", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("DETAILS", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1)),
       ),
-      bottomNavigationBar: const CommonBottomBar(currentIndex: 1),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(kPadding),
         child: Column(
@@ -289,10 +429,11 @@ class MachineDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
                 image: const DecorationImage(
                   image: NetworkImage("https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop"),
                   fit: BoxFit.cover,
-                  opacity: 0.6,
+                  opacity: 0.5,
                 ),
               ),
               child: Center(
@@ -311,37 +452,39 @@ class MachineDetailScreen extends StatelessWidget {
             // Header Info
             const Text(
               "Chest Press Machine",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 15),
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text("Beginner Friendly"),
+                  child: const Text("Beginner Friendly", style: TextStyle(color: Colors.white70)),
                 ),
-                const SizedBox(width: 10),
-                const Text("3 Sets x 12 Reps", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 15),
+                const Icon(Icons.fitness_center, color: kPrimaryColor, size: 18),
+                const SizedBox(width: 5),
+                const Text("3 Sets x 12 Reps", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
 
             // Description
-            const Text("Description", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("DESCRIPTION", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 10),
             Text(
               "This machine specifically targets the pectoral muscles. It provides a safer alternative to the bench press for beginners.",
-              style: TextStyle(color: Colors.grey[600], height: 1.5),
+              style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.6, fontSize: 16),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 30),
 
             // Tutorial
-            const Text("Tutorial", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
+            const Text("INSTRUCTIONS", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 20),
             _buildStep(1, "Adjust the seat height so handles are at chest level."),
             _buildStep(2, "Grip the handles and push forward until arms are extended."),
             _buildStep(3, "Slowly return to start position."),
@@ -353,59 +496,20 @@ class MachineDetailScreen extends StatelessWidget {
 
   Widget _buildStep(int number, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 12,
-            backgroundColor: kPrimaryColor,
+            backgroundColor: kCardColor,
             child: Text(
               "$number",
-              style: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 12, color: kPrimaryColor, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 15),
-          Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
-        ],
-      ),
-    );
-  }
-}
-
-// ------------------- SHARED: BOTTOM BAR -------------------
-class CommonBottomBar extends StatelessWidget {
-  final int currentIndex;
-  const CommonBottomBar({super.key, required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: BottomNavigationBar(
-        currentIndex: currentIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        backgroundColor: Colors.white,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search), // Matches "Search" in sketch
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined), // Matches the center shape in sketch2
-            activeIcon: Icon(Icons.map),
-            label: 'Map',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline), // Matches "Profile" in sketch
-            label: 'Profile',
-          ),
+          Expanded(child: Text(text, style: TextStyle(height: 1.4, color: Colors.white.withOpacity(0.9)))),
         ],
       ),
     );
