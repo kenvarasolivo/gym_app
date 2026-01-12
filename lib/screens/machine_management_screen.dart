@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_machine_screen.dart';
 import '../core/constants.dart';
+import '../widgets/custom_bottom_nav.dart'; // <--- Import the widget
 
 class MachineManagementScreen extends StatefulWidget {
   final String? userId;
-  final VoidCallback onBackToMap;
+  final bool isVerified;
+  final Function(int) onTabSelected; // <--- Changed from VoidCallback to Function(int)
 
   const MachineManagementScreen({
     super.key, 
     required this.userId, 
-    required this.onBackToMap
+    required this.isVerified,
+    required this.onTabSelected,
   });
 
   @override
@@ -33,20 +36,26 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Ensure background matches
+      backgroundColor: const Color(0xFF121212), 
       appBar: AppBar(
         title: const Text("Manage Machines"),
         backgroundColor: const Color(0xFF121212),
-        // CUSTOM BACK BUTTON
+        // Allows user to go back to "Anterior" view by clicking the back arrow
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: widget.onBackToMap, // <--- Calls the function from BodyMapScreen
+          onPressed: () => widget.onTabSelected(0), 
         ),
+      ),
+
+      // --- USE THE CUSTOM NAVBAR ---
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 2, // This screen is always index 2
+        isVerified: widget.isVerified, 
+        onTap: widget.onTabSelected, // Pass the click back to BodyMapScreen
       ),
       
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Pass userId to the Create Screen
           Navigator.push(
             context, 
             MaterialPageRoute(
@@ -54,9 +63,9 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
             )
           );
         },
-        label: const Text("Add Machine", style: TextStyle( color: Colors.black, fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add),
-        backgroundColor: kPrimaryColor, // Your Lime Green constant
+        label: const Text("Add Machine", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add, color: Colors.black),
+        backgroundColor: kPrimaryColor, 
       ),
       
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -92,12 +101,11 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
                       MaterialPageRoute(
                         builder: (context) => AddMachineScreen(
                           userId: widget.userId,
-                          // In the future, you can pass the 'machine' data here 
-                          // to fill the form for editing.
+                          machineData: machine,
+                          // Pass data here for editing in the future
                         ),
                       ),
                     );
-                    // Edit logic here
                   },
                 ),
               );

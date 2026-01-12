@@ -4,8 +4,9 @@ import '../core/constants.dart';
 
 class AddMachineScreen extends StatefulWidget {
   final String? userId; 
+  final Map<String, dynamic>? machineData; 
 
-  const AddMachineScreen({super.key, this.userId}); 
+  const AddMachineScreen({super.key, this.userId, this.machineData}); 
 
   @override
   State<AddMachineScreen> createState() => _AddMachineScreenState();
@@ -24,7 +25,41 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   
   // Dropdown Data
   String? _selectedMuscleGroup;
-  final List<String> _muscleGroups = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Abs', 'Cardio'];
+  final List<String> _muscleGroups = ['Chest', 'Side Shoulder', 'Front Shoulder', 'Biceps', 'Arms', 'Quads', 'Abs', 'Shins', 'Neck', 'Rear Shoulder', 'Triceps', 'Lower Back', 'Traps', 'Middle Back', 'Lats', 'Glutes', 'Hamstrings', 'Calves'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill controllers if machineData exists
+    if (widget.machineData != null) {
+      _nameController.text = widget.machineData!['name'] ?? '';
+      _selectedMuscleGroup = widget.machineData!['musclegroup'];
+      _iconUrlController.text = widget.machineData!['icon'] ?? '';
+      
+      // Note: You may need to fetch the description/video from 'machine_detail' 
+      // if it wasn't passed in the map.
+      _fetchExtraDetails();
+    }
+  }
+
+  Future<void> _fetchExtraDetails() async {
+    try {
+      final detail = await _supabase
+          .from('machine_detail')
+          .select('description, video')
+          .eq('machine_id', widget.machineData!['id'])
+          .maybeSingle();
+
+      if (detail != null && mounted) {
+        setState(() {
+          _descriptionController.text = detail['description'] ?? '';
+          _videoUrlController.text = detail['video'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching details: $e");
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // SUBMIT FORM
@@ -38,28 +73,52 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
     setState(() => _isLoading = true);
 
+    final isEditing = widget.machineData != null;
+
     try {
-      // STEP 1: Insert into 'machine_list'
-      final List<dynamic> listData = await _supabase.from('machine_list').insert({
-        'name': _nameController.text,
-        'musclegroup': _selectedMuscleGroup,
-        'icon': _iconUrlController.text, // Takes the text link directly
-        'creator_id': widget.userId, 
-      }).select();
+      if(isEditing){
+        final machineId = widget.machineData!['id'];
+        // UPDATE Table 1: machine_list
+        await _supabase.from('machine_list').update({
+          'name': _nameController.text,
+          'musclegroup': _selectedMuscleGroup,
+          'icon': _iconUrlController.text,
+        }).eq('id', widget.machineData!['id']);
 
-      final newMachineId = listData[0]['id']; 
+        // UPDATE Table 2: machine_detail
+        await _supabase.from('machine_detail').update({
+          'description': _descriptionController.text,
+          'video': _videoUrlController.text,
+        }).eq('machine_id', machineId);
 
-      // STEP 2: Insert into 'machine_detail'
-      await _supabase.from('machine_detail').insert({
-        'machine_id': newMachineId, 
-        'description': _descriptionController.text,
-        'video': _videoUrlController.text, // Takes the text link directly
-        'creator_id': widget.userId,
-      });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Machine Updated!")));
+          Navigator.pop(context);
+        }
+        
+      } else{
+        // STEP 1: Insert into 'machine_list'
+        final List<dynamic> listData = await _supabase.from('machine_list').insert({
+          'name': _nameController.text,
+          'musclegroup': _selectedMuscleGroup,
+          'icon': _iconUrlController.text, // Takes the text link directly
+          'creator_id': widget.userId, 
+        }).select();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Machine Created Successfully!")));
-        Navigator.pop(context); // Go back to list
+        final newMachineId = listData[0]['id']; 
+
+        // STEP 2: Insert into 'machine_detail'
+        await _supabase.from('machine_detail').insert({
+          'machine_id': newMachineId, 
+          'description': _descriptionController.text,
+          'video': _videoUrlController.text, // Takes the text link directly
+          'creator_id': widget.userId,
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Machine Created Successfully!")));
+          Navigator.pop(context); // Go back to list
+        }
       }
     } catch (e) {
       if (mounted) {
