@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import './login_screen.dart';
-import './craete_post_screen.dart';
+import './machine_management_screen.dart';
 import '../core/constants.dart';
 import '../widgets/muscle_tag.dart';
 
@@ -30,7 +30,7 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
 
     // If verified and "Create" tab selected → show create screen
     if (widget.isVerified && _currentViewIndex == 2) {
-      return CreatePostScreen(
+      return MachineManagementScreen(
         userId: widget.userId,
         onBackToMap: () => setState(() => _currentViewIndex = 0),
       );
