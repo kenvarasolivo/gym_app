@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_machine_screen.dart';
+import '../core/constants.dart';
 
 class MachineManagementScreen extends StatefulWidget {
   final String? userId;
@@ -53,9 +54,9 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
             )
           );
         },
-        label: const Text("Add Machine"),
+        label: const Text("Add Machine", style: TextStyle( color: Colors.black, fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add),
-        backgroundColor: const Color(0xFFD0FD3E),
+        backgroundColor: kPrimaryColor, // Your Lime Green constant
       ),
       
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -86,6 +87,16 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
                   subtitle: Text(machine['musclegroup'] ?? 'No Group', style: const TextStyle(color: Colors.grey)),
                   trailing: const Icon(Icons.edit, size: 16, color: Colors.grey),
                   onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddMachineScreen(
+                          userId: widget.userId,
+                          // In the future, you can pass the 'machine' data here 
+                          // to fill the form for editing.
+                        ),
+                      ),
+                    );
                     // Edit logic here
                   },
                 ),
