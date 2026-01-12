@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'core/constants.dart';
 import 'screens/body_map_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://nohtbajprkcfgdtjshfc.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vaHRiYWpwcmtjZmdkdGpzaGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTMxMTIsImV4cCI6MjA4MzcyOTExMn0.kAbk9eiAvVBn6b28jl6qfg1_DWIeIgI_rjsF1kuPTio',
+  );
+
   runApp(const GymMachineApp());
 }
 
