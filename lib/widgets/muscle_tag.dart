@@ -33,10 +33,10 @@ class MuscleTag extends StatelessWidget {
         
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? kPrimaryColor : kCardColor.withOpacity(0.9), 
+          color: isActive ? kPrimaryColor : kCardColor, 
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isActive ? kPrimaryColor : Colors.grey.withOpacity(0.3), 
+            color: isActive ? kPrimaryColor : Colors.grey, 
             width: 1.0
           ),
           boxShadow: [

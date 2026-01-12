@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/constants.dart';
 import 'screens/body_map_screen.dart';
+import 'screens/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async{
@@ -38,7 +39,7 @@ class GymMachineApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
-      home: const BodyMapScreen(),
+      home: const LoginScreen(),
     );
   }
 }
