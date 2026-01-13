@@ -1,4 +1,7 @@
+import 'dart:io'; 
+import 'package:flutter/foundation.dart'; // Import for kIsWeb
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddMachineScreen extends StatefulWidget {
@@ -16,34 +19,30 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
 
-  // Form Controllers
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _iconUrlController = TextEditingController();
+  final _iconUrlController = TextEditingController(); 
   final _videoUrlController = TextEditingController();
-  
-  // NEW: Additional Controllers
   final _instructionsController = TextEditingController();
   final _setsRepsController = TextEditingController();
   
-  // Dropdown Data
+  // CHANGED: Use XFile instead of File for cross-platform support
+  XFile? _imageFile; 
+  final _picker = ImagePicker();
+
   String? _selectedMuscleGroup;
-  String? _selectedDifficulty; // NEW: Difficulty State
+  String? _selectedDifficulty;
 
   final List<String> _muscleGroups = ['Chest', 'Side Shoulder', 'Front Shoulder', 'Biceps', 'Arms', 'Quads', 'Abs', 'Shins', 'Neck', 'Rear Shoulder', 'Triceps', 'Lower Back', 'Traps', 'Middle Back', 'Lats', 'Glutes', 'Hamstrings', 'Calves'];
-  
-  // NEW: Difficulty Options
   final List<String> _difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill controllers if machineData exists
     if (widget.machineData != null) {
       _nameController.text = widget.machineData!['name'] ?? '';
       _selectedMuscleGroup = widget.machineData!['musclegroup'];
       _iconUrlController.text = widget.machineData!['icon'] ?? '';
-      
       _fetchExtraDetails();
     }
   }
@@ -52,7 +51,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     try {
       final detail = await _supabase
           .from('machine_detail')
-          // SELECT: Added instructions, difficulty, sets_reps
           .select('description, video, instructions, difficulty, sets_reps')
           .eq('machine_id', widget.machineData!['id'])
           .maybeSingle();
@@ -61,15 +59,72 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         setState(() {
           _descriptionController.text = detail['description'] ?? '';
           _videoUrlController.text = detail['video'] ?? '';
-          
-          // PRE-FILL: New fields
           _instructionsController.text = detail['instructions'] ?? '';
           _setsRepsController.text = detail['sets_reps'] ?? '';
-          _selectedDifficulty = detail['difficulty']; // Matches text exactly
+          _selectedDifficulty = detail['difficulty'];
         });
       }
     } catch (e) {
       debugPrint("Error fetching details: $e");
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // IMAGE PICKER FUNCTIONS
+  // ---------------------------------------------------------------------------
+  
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery, 
+        imageQuality: 80, 
+      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          // Store directly as XFile
+          _imageFile = pickedFile;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+    }
+  }
+
+  Future<String?> _uploadImage() async {
+    if (_imageFile == null) return null;
+
+    try {
+      final fileExt = _imageFile!.name.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'icons/$fileName'; 
+
+      // Upload Logic differs for Web vs Mobile
+      if (kIsWeb) {
+        // WEB UPLOAD: Use bytes
+        final bytes = await _imageFile!.readAsBytes();
+        await _supabase.storage.from('machine_images').uploadBinary(
+          filePath,
+          bytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: false),
+        );
+      } else {
+        // MOBILE UPLOAD: Use File object
+        await _supabase.storage.from('machine_images').upload(
+          filePath,
+          File(_imageFile!.path),
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        );
+      }
+
+      final imageUrl = _supabase.storage.from('machine_images').getPublicUrl(filePath);
+      return imageUrl;
+    } catch (e) {
+      debugPrint("Error uploading image: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Upload failed: $e")));
+      }
+      return null;
     }
   }
 
@@ -83,26 +138,39 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
       return;
     }
 
+    if (_imageFile == null && _iconUrlController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select an image for the machine")));
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    final isEditing = widget.machineData != null;
-
     try {
+      String finalIconUrl = _iconUrlController.text;
+      
+      if (_imageFile != null) {
+        final uploadedUrl = await _uploadImage();
+        if (uploadedUrl != null) {
+          finalIconUrl = uploadedUrl;
+        } else {
+          throw "Image upload failed"; 
+        }
+      }
+
+      final isEditing = widget.machineData != null;
+
       if(isEditing){
         final machineId = widget.machineData!['id'];
         
-        // UPDATE Table 1: machine_list
         await _supabase.from('machine_list').update({
           'name': _nameController.text,
           'musclegroup': _selectedMuscleGroup,
-          'icon': _iconUrlController.text,
+          'icon': finalIconUrl, 
         }).eq('id', widget.machineData!['id']);
 
-        // UPDATE Table 2: machine_detail
         await _supabase.from('machine_detail').update({
           'description': _descriptionController.text,
           'video': _videoUrlController.text,
-          // NEW: Update fields
           'instructions': _instructionsController.text,
           'difficulty': _selectedDifficulty,
           'sets_reps': _setsRepsController.text,
@@ -114,23 +182,20 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         }
         
       } else{
-        // STEP 1: Insert into 'machine_list'
         final List<dynamic> listData = await _supabase.from('machine_list').insert({
           'name': _nameController.text,
           'musclegroup': _selectedMuscleGroup,
-          'icon': _iconUrlController.text, 
+          'icon': finalIconUrl, 
           'creator_id': widget.userId, 
         }).select();
 
         final newMachineId = listData[0]['id']; 
 
-        // STEP 2: Insert into 'machine_detail'
         await _supabase.from('machine_detail').insert({
           'machine_id': newMachineId, 
           'description': _descriptionController.text,
           'video': _videoUrlController.text,
           'creator_id': widget.userId,
-          // NEW: Insert fields
           'instructions': _instructionsController.text,
           'difficulty': _selectedDifficulty,
           'sets_reps': _setsRepsController.text,
@@ -167,7 +232,48 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- 1. NAME ---
+              
+              // --- 1. IMAGE PICKER (Web Compatible) ---
+              const Text("Machine Image", style: TextStyle(color: Colors.grey, fontSize: 14)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: _imageFile != null
+                        ? (kIsWeb 
+                            // WEB: Use Image.network with path (Image.file not supported)
+                            ? Image.network(_imageFile!.path, fit: BoxFit.cover) 
+                            // MOBILE: Use Image.file
+                            : Image.file(File(_imageFile!.path), fit: BoxFit.cover))
+                        : (_iconUrlController.text.isNotEmpty)
+                            ? Image.network( 
+                                _iconUrlController.text, 
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, o, s) => const Icon(Icons.broken_image, color: Colors.grey),
+                              )
+                            : Column( 
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.add_a_photo, size: 40, color: Color(0xFFD0FD3E)),
+                                  SizedBox(height: 10),
+                                  Text("Tap to upload image", style: TextStyle(color: Colors.white70)),
+                                ],
+                              ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ... REST OF YOUR FORM (Name, Description, etc.) ...
               TextFormField(
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
@@ -176,7 +282,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 2. MUSCLE GROUP ---
               DropdownButtonFormField<String>(
                 value: _selectedMuscleGroup,
                 dropdownColor: const Color(0xFF1C1C1E),
@@ -189,7 +294,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 3. DESCRIPTION ---
               TextFormField(
                 controller: _descriptionController,
                 style: const TextStyle(color: Colors.white),
@@ -199,7 +303,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- NEW: INSTRUCTIONS ---
               TextFormField(
                 controller: _instructionsController,
                 style: const TextStyle(color: Colors.white),
@@ -208,10 +311,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- NEW: DIFFICULTY & SETS REPS ROW ---
               Row(
                 children: [
-                  // Difficulty Dropdown
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedDifficulty,
@@ -225,7 +326,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                     ),
                   ),
                   const SizedBox(width: 15),
-                  // Sets & Reps Text
                   Expanded(
                     child: TextFormField(
                       controller: _setsRepsController,
@@ -237,38 +337,15 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-
-              // --- 4. ICON URL ---
-              TextFormField(
-                controller: _iconUrlController,
-                style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Icon Image URL (e.g. https://...)"),
-                keyboardType: TextInputType.url,
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'Required';
-                  if (!val.startsWith('http')) return 'Must be a valid link';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 15),
-
-              // --- 5. VIDEO URL ---
               TextFormField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Video URL (e.g. YouTube/MP4 link)"),
+                decoration: _inputDecoration("Video URL (YouTube/MP4)"),
                 keyboardType: TextInputType.url,
-                validator: (val) { 
-                  if (val != null && val.isNotEmpty && !val.startsWith('http')) {
-                    return 'Must be a valid link';
-                  }
-                  return null;
-                },
               ),
               
               const SizedBox(height: 40),
 
-              // --- 6. SUBMIT BUTTON ---
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
