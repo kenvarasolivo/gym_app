@@ -20,7 +20,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   
-
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _iconUrlController = TextEditingController(); 
@@ -28,7 +27,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   final _instructionsController = TextEditingController();
   final _setsRepsController = TextEditingController();
   
-  // CHANGED: Use XFile instead of File for cross-platform support
   XFile? _imageFile; 
   XFile? _videoFile;
   final _picker = ImagePicker();
@@ -85,7 +83,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
       
       if (pickedFile != null) {
         setState(() {
-          // Store directly as XFile
           _imageFile = pickedFile;
         });
       }
@@ -102,9 +99,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'icons/$fileName'; 
 
-      // Upload Logic differs for Web vs Mobile
       if (kIsWeb) {
-        // WEB UPLOAD: Use bytes
         final bytes = await _imageFile!.readAsBytes();
         await _supabase.storage.from('machine_images').uploadBinary(
           filePath,
@@ -112,7 +107,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
           fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: false),
         );
       } else {
-        // MOBILE UPLOAD: Use File object
         await _supabase.storage.from('machine_images').upload(
           filePath,
           File(_imageFile!.path),
@@ -136,52 +130,53 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> _pickVideo() async {
-  try {
-    final pickedFile = await _picker.pickVideo(
-      source: ImageSource.gallery,
-      maxDuration: const Duration(minutes: 5), // Optional limit
-    );
-    
-    if (pickedFile != null) {
-      setState(() {
-        _videoFile = pickedFile;
-        _videoUrlController.text = pickedFile.name; // Show filename in the text field
-      });
-    }
-  } catch (e) {
-    debugPrint("Error picking video: $e");
-  }
-}
-
-Future<String?> _uploadVideo() async {
-  if (_videoFile == null) return null;
-
-  try {
-    final fileExt = _videoFile!.name.split('.').last;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final filePath = 'videos/$fileName'; // Upload to video folder
-
-    if (kIsWeb) {
-      final bytes = await _videoFile!.readAsBytes();
-      await _supabase.storage.from('machine_images').uploadBinary(
-        filePath,
-        bytes,
-        fileOptions: const FileOptions(contentType: 'video/mp4', upsert: false),
+    try {
+      final pickedFile = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 5), 
       );
-    } else {
-      await _supabase.storage.from('machine_images').upload(
-        filePath,
-        File(_videoFile!.path),
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          _videoFile = pickedFile;
+          // Set the text field to the filename so the user knows a file is selected
+          _videoUrlController.text = pickedFile.name; 
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking video: $e");
     }
-
-    return _supabase.storage.from('machine_images').getPublicUrl(filePath);
-  } catch (e) {
-    debugPrint("Error uploading video: $e");
-    return null;
   }
-}
+
+  Future<String?> _uploadVideo() async {
+    if (_videoFile == null) return null;
+
+    try {
+      final fileExt = _videoFile!.name.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'videos/$fileName'; 
+
+      if (kIsWeb) {
+        final bytes = await _videoFile!.readAsBytes();
+        await _supabase.storage.from('machine_images').uploadBinary(
+          filePath,
+          bytes,
+          fileOptions: const FileOptions(contentType: 'video/mp4', upsert: false),
+        );
+      } else {
+        await _supabase.storage.from('machine_images').upload(
+          filePath,
+          File(_videoFile!.path),
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        );
+      }
+
+      return _supabase.storage.from('machine_images').getPublicUrl(filePath);
+    } catch (e) {
+      debugPrint("Error uploading video: $e");
+      return null;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // SUBMIT FORM
@@ -201,8 +196,8 @@ Future<String?> _uploadVideo() async {
     setState(() => _isLoading = true);
 
     try {
+      // 1. Handle Image Upload
       String finalIconUrl = _iconUrlController.text;
-      
       if (_imageFile != null) {
         final uploadedUrl = await _uploadImage();
         if (uploadedUrl != null) {
@@ -212,7 +207,11 @@ Future<String?> _uploadVideo() async {
         }
       }
 
+      // 2. Handle Video (Upload File OR Use YouTube Link)
       String finalVideoUrl = _videoUrlController.text;
+
+      // Only upload if a FILE was actually picked. 
+      // If _videoFile is null, we assume the user typed a YouTube link in the text box.
       if (_videoFile != null) {
         final uploadedVideoUrl = await _uploadVideo();
         if (uploadedVideoUrl != null) {
@@ -221,6 +220,7 @@ Future<String?> _uploadVideo() async {
           throw "Video upload failed";
         }
       }
+
       final isEditing = widget.machineData != null;
 
       if(isEditing){
@@ -297,7 +297,7 @@ Future<String?> _uploadVideo() async {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               
-              // --- 1. IMAGE PICKER (Web Compatible) ---
+              // --- 1. IMAGE PICKER ---
               const Text("Machine Image", style: TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
               GestureDetector(
@@ -314,9 +314,7 @@ Future<String?> _uploadVideo() async {
                     borderRadius: BorderRadius.circular(15),
                     child: _imageFile != null
                         ? (kIsWeb 
-                            // WEB: Use Image.network with path (Image.file not supported)
                             ? Image.network(_imageFile!.path, fit: BoxFit.cover) 
-                            // MOBILE: Use Image.file
                             : Image.file(File(_imageFile!.path), fit: BoxFit.cover))
                         : (_iconUrlController.text.isNotEmpty)
                             ? Image.network( 
@@ -337,7 +335,7 @@ Future<String?> _uploadVideo() async {
               ),
               const SizedBox(height: 20),
 
-              // ... REST OF YOUR FORM (Name, Description, etc.) ...
+              // --- TEXT FIELDS ---
               TextFormField(
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
@@ -400,30 +398,37 @@ Future<String?> _uploadVideo() async {
                 ],
               ),
               const SizedBox(height: 15),
-              // --- 2. VIDEO PICKER (Web Compatible) ---
+
+              // --- 2. VIDEO INPUT (File OR Link) ---
               const Text("Machine Video", style: TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
+              
               TextFormField(
                 controller: _videoUrlController,
-                readOnly: true, // Prevent manual typing
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Pick Video File").copyWith(
+                // Allow typing; show upload button as an option
+                decoration: _inputDecoration("Video URL (YouTube) or Pick File").copyWith(
+                  hintText: "https://youtube.com/...",
+                  hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.video_library, color: kPrimaryColor),
-                    onPressed: _pickVideo,
+                    icon: const Icon(Icons.upload_file, color: Color(0xFFD0FD3E)), // kPrimaryColor
+                    tooltip: "Pick Video File",
+                    onPressed: _pickVideo, 
                   ),
                 ),
-                onTap: _pickVideo, // Allow tapping the whole field to pick
+                onChanged: (value) {
+                  // If user starts typing manually, clear the picked file so we don't accidentally upload it
+                  if (_videoFile != null) {
+                    setState(() {
+                      _videoFile = null;
+                    });
+                  }
+                },
               ),
-              // TextFormField(
-              //   controller: _videoUrlController,
-              //   style: const TextStyle(color: Colors.white),
-              //   decoration: _inputDecoration("Video URL (YouTube/MP4)"),
-              //   keyboardType: TextInputType.url,
-              // ),
               
               const SizedBox(height: 40),
 
+              // --- SUBMIT BUTTON ---
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
