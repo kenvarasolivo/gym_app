@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants.dart';
+import '../widgets/youtube_player_widget.dart';
 
 class MachineDetailScreen extends StatefulWidget {
   final Map<String, dynamic> machineData;
@@ -112,35 +113,9 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                 
                 // Video Player
                 if (videoUrl != null && videoUrl.toString().isNotEmpty) ...[
-                  GestureDetector(
-                    onTap: () => _launchVideo(videoUrl),
-                    child: Container(
-                      height: 220,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withAlpha(26)),
-                        image: widget.machineData['icon'] != null 
-                            ? DecorationImage(
-                                image: NetworkImage(widget.machineData['icon']),
-                                fit: BoxFit.cover,
-                                opacity: 0.5,
-                              )
-                            : null,
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: const BoxDecoration(
-                            color: kPrimaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.play_arrow, size: 30, color: Colors.black),
-                        ),
-                      ),
-                    ),
-                  ),
+  
+                  YouTubeVideoPlayer(videoUrl: videoUrl),
+                  
                   const SizedBox(height: 25),
                 ],
 
