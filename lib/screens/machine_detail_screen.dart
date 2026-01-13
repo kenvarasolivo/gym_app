@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants.dart';
 import '../widgets/youtube_player_widget.dart';
+import '../widgets/video_player_widget.dart';
 
 class MachineDetailScreen extends StatefulWidget {
   final Map<String, dynamic> machineData;
@@ -20,6 +21,16 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
   void initState() {
     super.initState();
     _detailFuture = _fetchMachineDetails();
+  }
+
+  bool _isYouTubeUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.contains('youtube.com') || lower.contains('youtu.be') || lower.contains('/shorts/');
+  }
+
+  bool _isVideoUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.mp4') || lower.endsWith('.mov') || lower.endsWith('.webm') || lower.endsWith('.mkv');
   }
 
   Future<Map<String, dynamic>?> _fetchMachineDetails() async {
@@ -112,12 +123,28 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
               children: [
                 
                 // Video Player
-                if (videoUrl != null && videoUrl.toString().isNotEmpty) ...[
-  
-                  YouTubeVideoPlayer(videoUrl: videoUrl),
-                  
-                  const SizedBox(height: 25),
-                ],
+                  if (videoUrl != null && videoUrl.toString().isNotEmpty) ...[
+                    Builder(builder: (_) {
+                      final v = videoUrl.toString();
+                      if (_isYouTubeUrl(v)) {
+                        return Column(children: [YouTubeVideoPlayer(videoUrl: v), const SizedBox(height: 25)]);
+                      }
+
+                      if (_isVideoUrl(v)) {
+                        return Column(children: [VideoPlayerWidget(videoUrl: v), const SizedBox(height: 25)]);
+                      }
+
+                      // fallback: show a button to launch externally
+                      return Column(children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _launchVideo(v),
+                          icon: const Icon(Icons.open_in_new),
+                          label: const Text('Open Video'),
+                        ),
+                        const SizedBox(height: 25),
+                      ]);
+                    }),
+                  ],
 
                 // Header Info
                 Text(

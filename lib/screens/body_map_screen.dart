@@ -39,14 +39,12 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
   Future<void> _fetchAvailableGroups() async {
     try {
       final data = await Supabase.instance.client.from('machine_list').select('musclegroup');
-      if (data is List) {
-        final groups = data
-            .map((e) => (e['musclegroup'] ?? '').toString())
-            .where((s) => s.isNotEmpty)
-            .toSet();
-        if (mounted) setState(() => _availableGroups = groups);
-      }
-    } catch (e) {
+      final groups = data
+          .map((e) => (e['musclegroup'] ?? '').toString())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+      if (mounted) setState(() => _availableGroups = groups);
+        } catch (e) {
       debugPrint('Error fetching available groups: $e');
     }
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../core/constants.dart';
 import '../screens/machine_detail_screen.dart';
 import '../supabase/post_functions.dart';
+import '../widgets/video_player_widget.dart';
+import '../widgets/youtube_player_widget.dart';
 
 class MachineListScreen extends StatefulWidget {
   final String muscleGroup;
@@ -99,6 +101,39 @@ class _MachineListScreenState extends State<MachineListScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
+            // If the 'icon' field actually contains a video URL, open a player.
+            if (imgUrl.isNotEmpty && _isYouTubeUrl(imgUrl)) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => Scaffold(
+                    appBar: AppBar(),
+                    body: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: YouTubeVideoPlayer(videoUrl: imgUrl),
+                    ),
+                  ),
+                ),
+              );
+              return;
+            }
+
+            if (imgUrl.isNotEmpty && _isVideoUrl(imgUrl)) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => Scaffold(
+                    appBar: AppBar(),
+                    body: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: VideoPlayerWidget(videoUrl: imgUrl),
+                    ),
+                  ),
+                ),
+              );
+              return;
+            }
+
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -132,35 +167,14 @@ class _MachineListScreenState extends State<MachineListScreen> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, dynamic id, String name) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Delete "$name"?'),
-        content: const Text('Are you sure you want to delete this machine? This action cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _loading = true);
-    try {
-      await supabase.from('machine_list').delete().eq('id', id);
-      setState(() {
-        _machines.removeWhere((m) => m['id'] == id);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Machine deleted')));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  bool _isYouTubeUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.contains('youtube.com') || lower.contains('youtu.be') || lower.contains('/shorts/');
   }
+
+  bool _isVideoUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.mp4') || lower.endsWith('.mov') || lower.endsWith('.webm') || lower.endsWith('.mkv');
+  }
+
 }
