@@ -34,7 +34,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   String? _selectedMuscleGroup;
   String? _selectedDifficulty;
 
-  final List<String> _muscleGroups = ['Chest', 'Side Shoulder', 'Front Shoulder', 'Biceps', 'Arms', 'Quads', 'Abs', 'Shins', 'Neck', 'Rear Shoulder', 'Triceps', 'Lower Back', 'Traps', 'Middle Back', 'Lats', 'Glutes', 'Hamstrings', 'Calves'];
+  final List<String> _muscleGroups = ['Chest', 'Side Shoulders', 'Front Shoulders', 'Biceps', 'Arms', 'Quads', 'Abs', 'Shins', 'Neck', 'Rear Shoulders', 'Triceps', 'Lower Back', 'Traps', 'Middle Back', 'Lats', 'Glutes', 'Hamstrings', 'Calves'];
   final List<String> _difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
   @override
