@@ -19,12 +19,21 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   // Form Controllers
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _iconUrlController = TextEditingController(); // NEW: For Icon Link
-  final _videoUrlController = TextEditingController(); // NEW: For Video Link
+  final _iconUrlController = TextEditingController();
+  final _videoUrlController = TextEditingController();
+  
+  // NEW: Additional Controllers
+  final _instructionsController = TextEditingController();
+  final _setsRepsController = TextEditingController();
   
   // Dropdown Data
   String? _selectedMuscleGroup;
+  String? _selectedDifficulty; // NEW: Difficulty State
+
   final List<String> _muscleGroups = ['Chest', 'Side Shoulder', 'Front Shoulder', 'Biceps', 'Arms', 'Quads', 'Abs', 'Shins', 'Neck', 'Rear Shoulder', 'Triceps', 'Lower Back', 'Traps', 'Middle Back', 'Lats', 'Glutes', 'Hamstrings', 'Calves'];
+  
+  // NEW: Difficulty Options
+  final List<String> _difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
   @override
   void initState() {
@@ -35,8 +44,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
       _selectedMuscleGroup = widget.machineData!['musclegroup'];
       _iconUrlController.text = widget.machineData!['icon'] ?? '';
       
-      // Note: You may need to fetch the description/video from 'machine_detail' 
-      // if it wasn't passed in the map.
       _fetchExtraDetails();
     }
   }
@@ -45,7 +52,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     try {
       final detail = await _supabase
           .from('machine_detail')
-          .select('description, video')
+          // SELECT: Added instructions, difficulty, sets_reps
+          .select('description, video, instructions, difficulty, sets_reps')
           .eq('machine_id', widget.machineData!['id'])
           .maybeSingle();
 
@@ -53,6 +61,11 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         setState(() {
           _descriptionController.text = detail['description'] ?? '';
           _videoUrlController.text = detail['video'] ?? '';
+          
+          // PRE-FILL: New fields
+          _instructionsController.text = detail['instructions'] ?? '';
+          _setsRepsController.text = detail['sets_reps'] ?? '';
+          _selectedDifficulty = detail['difficulty']; // Matches text exactly
         });
       }
     } catch (e) {
@@ -77,6 +90,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     try {
       if(isEditing){
         final machineId = widget.machineData!['id'];
+        
         // UPDATE Table 1: machine_list
         await _supabase.from('machine_list').update({
           'name': _nameController.text,
@@ -88,6 +102,10 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         await _supabase.from('machine_detail').update({
           'description': _descriptionController.text,
           'video': _videoUrlController.text,
+          // NEW: Update fields
+          'instructions': _instructionsController.text,
+          'difficulty': _selectedDifficulty,
+          'sets_reps': _setsRepsController.text,
         }).eq('machine_id', machineId);
 
         if (mounted) {
@@ -100,7 +118,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         final List<dynamic> listData = await _supabase.from('machine_list').insert({
           'name': _nameController.text,
           'musclegroup': _selectedMuscleGroup,
-          'icon': _iconUrlController.text, // Takes the text link directly
+          'icon': _iconUrlController.text, 
           'creator_id': widget.userId, 
         }).select();
 
@@ -110,13 +128,17 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         await _supabase.from('machine_detail').insert({
           'machine_id': newMachineId, 
           'description': _descriptionController.text,
-          'video': _videoUrlController.text, // Takes the text link directly
+          'video': _videoUrlController.text,
           'creator_id': widget.userId,
+          // NEW: Insert fields
+          'instructions': _instructionsController.text,
+          'difficulty': _selectedDifficulty,
+          'sets_reps': _setsRepsController.text,
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Machine Created Successfully!")));
-          Navigator.pop(context); // Go back to list
+          Navigator.pop(context); 
         }
       }
     } catch (e) {
@@ -133,7 +155,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text("Create New Machine"),
+        title: Text(widget.machineData == null ? "Create New Machine" : "Edit Machine"),
         backgroundColor: const Color(0xFF121212),
         iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
@@ -154,9 +176,9 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 2. MUSCLE GROUP DROPDOWN ---
+              // --- 2. MUSCLE GROUP ---
               DropdownButtonFormField<String>(
-                initialValue: _selectedMuscleGroup,
+                value: _selectedMuscleGroup,
                 dropdownColor: const Color(0xFF1C1C1E),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Muscle Group"),
@@ -177,7 +199,46 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 4. ICON URL (LINK) ---
+              // --- NEW: INSTRUCTIONS ---
+              TextFormField(
+                controller: _instructionsController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 6,
+                decoration: _inputDecoration("Step-by-step Instructions"),
+              ),
+              const SizedBox(height: 15),
+
+              // --- NEW: DIFFICULTY & SETS REPS ROW ---
+              Row(
+                children: [
+                  // Difficulty Dropdown
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedDifficulty,
+                      dropdownColor: const Color(0xFF1C1C1E),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDecoration("Difficulty"),
+                      items: _difficultyLevels.map((level) {
+                        return DropdownMenuItem(value: level, child: Text(level));
+                      }).toList(),
+                      onChanged: (val) => setState(() => _selectedDifficulty = val),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  // Sets & Reps Text
+                  Expanded(
+                    child: TextFormField(
+                      controller: _setsRepsController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDecoration("Sets & Reps (e.g. 3x12)"),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+
+
+              // --- 4. ICON URL ---
               TextFormField(
                 controller: _iconUrlController,
                 style: const TextStyle(color: Colors.white),
@@ -191,13 +252,12 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 5. VIDEO URL (LINK) ---
+              // --- 5. VIDEO URL ---
               TextFormField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Video URL (e.g. YouTube/MP4 link)"),
                 keyboardType: TextInputType.url,
-                 // Optional: Remove validator if video is not mandatory
                 validator: (val) { 
                   if (val != null && val.isNotEmpty && !val.startsWith('http')) {
                     return 'Must be a valid link';
@@ -219,7 +279,8 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                   ),
                   child: _isLoading 
                     ? const CircularProgressIndicator()
-                    : const Text("CREATE MACHINE", style: TextStyle(fontWeight: FontWeight.bold)),
+                    : Text(widget.machineData == null ? "CREATE MACHINE" : "UPDATE MACHINE", 
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

@@ -70,13 +70,17 @@ class _MachineListScreenState extends State<MachineListScreen> {
                         crossAxisSpacing: 15,
                         mainAxisSpacing: 15,
                         childAspectRatio: 0.85,
-                        children: _machines.map((m) => _buildMachineCard(context, m['id'], m['name'] ?? '', m['icon'] ?? '')).toList(),
+                        children: _machines.map((m) => _buildMachineCard(context, m)).toList(),
                       ),
       ),
     );
   }
 
-  Widget _buildMachineCard(BuildContext context, dynamic id, String name, String imgUrl) {
+  Widget _buildMachineCard(BuildContext context, Map<String, dynamic> machine) {
+    // Extract the values from the map for display
+    final name = machine['name'] ?? '';
+    final imgUrl = machine['icon'] ?? '';
+
     return Container(
       decoration: BoxDecoration(
         color: kCardColor,
@@ -97,7 +101,10 @@ class _MachineListScreenState extends State<MachineListScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => MachineDetailScreen(machineName: name)),
+              MaterialPageRoute(
+                // NOW 'machine' exists and can be passed correctly
+                builder: (_) => MachineDetailScreen(machineData: machine),
+              ),
             );
           },
           child: Column(
