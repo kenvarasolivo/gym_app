@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/constants.dart';
 
 class AddMachineScreen extends StatefulWidget {
   final String? userId; 
@@ -157,7 +156,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
               // --- 2. MUSCLE GROUP DROPDOWN ---
               DropdownButtonFormField<String>(
-                value: _selectedMuscleGroup,
+                initialValue: _selectedMuscleGroup,
                 dropdownColor: const Color(0xFF1C1C1E),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Muscle Group"),

@@ -59,10 +59,10 @@ class MachineListScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: kCardColor, // Dark card
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withAlpha(13)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withAlpha(77),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )

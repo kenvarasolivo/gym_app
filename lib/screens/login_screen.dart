@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: 'Username',
                         hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.06),
+                        fillColor: Colors.white.withAlpha(15),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: 'Password',
                         hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.06),
+                        fillColor: Colors.white.withAlpha(15),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
@@ -212,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withAlpha(128),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),

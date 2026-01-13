@@ -41,7 +41,7 @@ class MuscleTag extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withAlpha(128),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

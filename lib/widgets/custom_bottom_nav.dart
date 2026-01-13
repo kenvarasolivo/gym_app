@@ -44,7 +44,7 @@ class CustomBottomNav extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: kBackgroundColor,
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: Colors.white.withAlpha(26))),
       ),
       child: BottomNavigationBar(
         currentIndex: safeIndex,

@@ -28,7 +28,7 @@ class MachineDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withAlpha(26)),
                 image: const DecorationImage(
                   image: NetworkImage("https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop"),
                   fit: BoxFit.cover,
@@ -59,7 +59,7 @@ class MachineDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withAlpha(26),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text("Beginner Friendly", style: TextStyle(color: Colors.white70)),
@@ -77,7 +77,7 @@ class MachineDetailScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               "This machine specifically targets the pectoral muscles. It provides a safer alternative to the bench press for beginners.",
-              style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.6, fontSize: 16),
+              style: TextStyle(color: Colors.white.withAlpha(204), height: 1.6, fontSize: 16),
             ),
             const SizedBox(height: 30),
 
@@ -108,7 +108,7 @@ class MachineDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 15),
-          Expanded(child: Text(text, style: TextStyle(height: 1.4, color: Colors.white.withOpacity(0.9)))),
+          Expanded(child: Text(text, style: TextStyle(height: 1.4, color: Colors.white.withAlpha(230)))),
         ],
       ),
     );
