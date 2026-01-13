@@ -3,8 +3,9 @@ import '../core/constants.dart';
 
 
 class MachineDetailScreen extends StatelessWidget {
+  final String machineName;
 
-  const MachineDetailScreen({super.key});
+  const MachineDetailScreen({super.key, required this.machineName});
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +50,9 @@ class MachineDetailScreen extends StatelessWidget {
             const SizedBox(height: 25),
 
             // Header Info
-            const Text(
-              "Chest Press Machine",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            Text(
+              machineName,
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 15),
             Row(

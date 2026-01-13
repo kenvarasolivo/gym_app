@@ -33,6 +33,32 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
         .order('name', ascending: true);
   }
 
+  Future<void> _confirmDelete(dynamic id, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete "$name"?'),
+        content: const Text('Are you sure you want to delete this machine? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _supabase.from('machine_list').delete().eq('id', id);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Machine deleted')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,19 +80,19 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
         onTap: widget.onTabSelected, // Pass the click back to BodyMapScreen
       ),
       
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context, 
-            MaterialPageRoute(
-              builder: (context) => AddMachineScreen(userId: widget.userId)
+      floatingActionButton: widget.isVerified
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddMachineScreen(userId: widget.userId)),
+                );
+              },
+              label: const Text("Add Machine", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.add, color: Colors.black),
+              backgroundColor: kPrimaryColor,
             )
-          );
-        },
-        label: const Text("Add Machine", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add, color: Colors.black),
-        backgroundColor: kPrimaryColor, 
-      ),
+          : null,
       
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _machineStream,
@@ -94,7 +120,32 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
                     : const Icon(Icons.fitness_center, color: Colors.white),
                   title: Text(machine['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
                   subtitle: Text(machine['musclegroup'] ?? 'No Group', style: const TextStyle(color: Colors.grey)),
-                  trailing: const Icon(Icons.edit, size: 16, color: Colors.grey),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddMachineScreen(
+                                userId: widget.userId,
+                                machineData: machine,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (widget.isVerified) ...[
+                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                          onPressed: () => _confirmDelete(machine['id'], machine['name'] ?? 'Unknown'),
+                        ),
+                      ],
+                    ],
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,

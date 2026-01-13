@@ -16,7 +16,10 @@ class MuscleTag extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: isActive
-          ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MachineListScreen()))
+          ? () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => MachineListScreen(muscleGroup: label)),
+              )
           : () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
