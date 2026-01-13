@@ -47,17 +47,19 @@ class _YouTubeVideoPlayerState extends State<YouTubeVideoPlayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 220,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.black,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: YoutubePlayer(
-          controller: _controller,
-          aspectRatio: 16 / 9,
-        ),
+        child: AspectRatio(
+          aspectRatio: 16/9,
+          child: YoutubePlayer(
+            controller: _controller,
+            aspectRatio: 16 / 9,
+          ),
+        )
       ),
     );
   }
