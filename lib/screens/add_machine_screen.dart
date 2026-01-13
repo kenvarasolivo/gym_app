@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // Import for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/constants.dart';
 
 class AddMachineScreen extends StatefulWidget {
   final String? userId; 
@@ -18,6 +19,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   final _formKey = GlobalKey<FormState>();
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
+  
 
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -28,6 +30,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   
   // CHANGED: Use XFile instead of File for cross-platform support
   XFile? _imageFile; 
+  XFile? _videoFile;
   final _picker = ImagePicker();
 
   String? _selectedMuscleGroup;
@@ -129,6 +132,58 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // VIDEO PICKER FUNCTIONS
+  // ---------------------------------------------------------------------------
+
+  Future<void> _pickVideo() async {
+  try {
+    final pickedFile = await _picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(minutes: 5), // Optional limit
+    );
+    
+    if (pickedFile != null) {
+      setState(() {
+        _videoFile = pickedFile;
+        _videoUrlController.text = pickedFile.name; // Show filename in the text field
+      });
+    }
+  } catch (e) {
+    debugPrint("Error picking video: $e");
+  }
+}
+
+Future<String?> _uploadVideo() async {
+  if (_videoFile == null) return null;
+
+  try {
+    final fileExt = _videoFile!.name.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final filePath = 'videos/$fileName'; // Upload to video folder
+
+    if (kIsWeb) {
+      final bytes = await _videoFile!.readAsBytes();
+      await _supabase.storage.from('machine_images').uploadBinary(
+        filePath,
+        bytes,
+        fileOptions: const FileOptions(contentType: 'video/mp4', upsert: false),
+      );
+    } else {
+      await _supabase.storage.from('machine_images').upload(
+        filePath,
+        File(_videoFile!.path),
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+      );
+    }
+
+    return _supabase.storage.from('machine_images').getPublicUrl(filePath);
+  } catch (e) {
+    debugPrint("Error uploading video: $e");
+    return null;
+  }
+}
+
+  // ---------------------------------------------------------------------------
   // SUBMIT FORM
   // ---------------------------------------------------------------------------
   Future<void> _submitForm() async {
@@ -157,6 +212,15 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         }
       }
 
+      String finalVideoUrl = _videoUrlController.text;
+      if (_videoFile != null) {
+        final uploadedVideoUrl = await _uploadVideo();
+        if (uploadedVideoUrl != null) {
+          finalVideoUrl = uploadedVideoUrl;
+        } else {
+          throw "Video upload failed";
+        }
+      }
       final isEditing = widget.machineData != null;
 
       if(isEditing){
@@ -170,7 +234,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
         await _supabase.from('machine_detail').update({
           'description': _descriptionController.text,
-          'video': _videoUrlController.text,
+          'video': finalVideoUrl,
           'instructions': _instructionsController.text,
           'difficulty': _selectedDifficulty,
           'sets_reps': _setsRepsController.text,
@@ -194,7 +258,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         await _supabase.from('machine_detail').insert({
           'machine_id': newMachineId, 
           'description': _descriptionController.text,
-          'video': _videoUrlController.text,
+          'video': finalVideoUrl,
           'creator_id': widget.userId,
           'instructions': _instructionsController.text,
           'difficulty': _selectedDifficulty,
@@ -336,13 +400,27 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 ],
               ),
               const SizedBox(height: 15),
-
+              // --- 2. VIDEO PICKER (Web Compatible) ---
+              const Text("Machine Video", style: TextStyle(color: Colors.grey, fontSize: 14)),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _videoUrlController,
+                readOnly: true, // Prevent manual typing
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Video URL (YouTube/MP4)"),
-                keyboardType: TextInputType.url,
+                decoration: _inputDecoration("Pick Video File").copyWith(
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.video_library, color: kPrimaryColor),
+                    onPressed: _pickVideo,
+                  ),
+                ),
+                onTap: _pickVideo, // Allow tapping the whole field to pick
               ),
+              // TextFormField(
+              //   controller: _videoUrlController,
+              //   style: const TextStyle(color: Colors.white),
+              //   decoration: _inputDecoration("Video URL (YouTube/MP4)"),
+              //   keyboardType: TextInputType.url,
+              // ),
               
               const SizedBox(height: 40),
 
