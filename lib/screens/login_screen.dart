@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_app/screens/register_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import './body_map_screen.dart';
@@ -257,6 +258,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
+                  TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      child: const Text("Don't have an account? Sign Up", style: TextStyle(color: kPrimaryColor)),
+                  ),
 
                   const SizedBox(height: 15),
 
@@ -286,7 +296,6 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 // ------------------- AUTH SERVICE -------------------
-// (leave in same file for your test setup)
 
 class AuthService {
   final SupabaseClient _client;
@@ -322,6 +331,29 @@ class AuthService {
     };
 
     return _currentProfile!;
+  }
+
+  Future<void> signUp({
+    required String username,
+    required String password,
+  }) async {
+    // Check if username already exists
+    final existing = await _client
+        .from('profiles')
+        .select('username')
+        .eq('username', username.trim())
+        .maybeSingle();
+
+    if (existing != null) {
+      throw const AuthException('Username already taken');
+    }
+
+    // Insert new profile
+    await _client.from('profiles').insert({
+      'username': username.trim(),
+      'password': password, // Note: In production, use hashing!
+      'verified': false,    // Default to non-admin
+    });
   }
 
   Future<void> signOut() async {
