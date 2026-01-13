@@ -25,16 +25,31 @@ class _YouTubeVideoPlayerState extends State<YouTubeVideoPlayer> {
         showControls: true,
         showFullscreenButton: true,
         mute: false,
+        enableJavaScript: true,
+        origin: 'https://www.youtube-nocookie.com',
       ),
     );
   }
 
   // Helper to extract ID from various YouTube URL formats
   String _extractVideoId(String url) {
-    // youtube_player_iframe handles simple IDs, but we can use this logic 
-    // to ensure we pass a clean ID if the package doesn't parse your specific URL format.
-    // The package also has a helper: YoutubePlayerController.convertUrlToId(url)
-    return YoutubePlayerController.convertUrlToId(url) ?? '';
+// Use the static helper provided by the package
+  final id = YoutubePlayerController.convertUrlToId(url);
+  if (id != null && id.length == 11) return id;
+  
+  // Manual fallback for shorts or unusual formats
+  if (url.contains('/shorts/')) {
+    final parts = url.split('/shorts/');
+    if (parts.length > 1) {
+      // Returns the ID and removes any trailing query parameters like ?cbrd=1
+      return parts[1].split('?')[0].split('&')[0];
+    }
+  }
+  
+ // 3. Last resort: if the URL is already just an 11-char ID
+  if (url.trim().length == 11) return url.trim();
+  
+  return '';
   }
 
   @override
