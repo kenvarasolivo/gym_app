@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_machine_screen.dart';
 import '../core/constants.dart';
-import '../widgets/custom_bottom_nav.dart'; // <--- Import the widget
+import '../widgets/custom_bottom_nav.dart';
 
 class MachineManagementScreen extends StatefulWidget {
   final String? userId;
   final bool isVerified;
-  final Function(int) onTabSelected; // <--- Changed from VoidCallback to Function(int)
+  final Function(int) onTabSelected; 
 
   const MachineManagementScreen({
     super.key, 
@@ -66,7 +66,6 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
       appBar: AppBar(
         title: const Text("Manage Machines"),
         backgroundColor: const Color(0xFF121212),
-        // Allows user to go back to "Anterior" view by clicking the back arrow
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => widget.onTabSelected(0), 
@@ -75,9 +74,9 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
 
       // --- USE THE CUSTOM NAVBAR ---
       bottomNavigationBar: CustomBottomNav(
-        currentIndex: 2, // This screen is always index 2
+        currentIndex: 2, 
         isVerified: widget.isVerified, 
-        onTap: widget.onTabSelected, // Pass the click back to BodyMapScreen
+        onTap: widget.onTabSelected,
       ),
       
       floatingActionButton: widget.isVerified
@@ -153,7 +152,7 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
                         builder: (context) => AddMachineScreen(
                           userId: widget.userId,
                           machineData: machine,
-                          // Pass data here for editing in the future
+                          
                         ),
                       ),
                     );

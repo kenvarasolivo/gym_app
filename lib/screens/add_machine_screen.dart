@@ -139,7 +139,6 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
       if (pickedFile != null) {
         setState(() {
           _videoFile = pickedFile;
-          // Set the text field to the filename so the user knows a file is selected
           _videoUrlController.text = pickedFile.name; 
         });
       }
@@ -196,7 +195,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Handle Image Upload
+      //Handle Image Upload
       String finalIconUrl = _iconUrlController.text;
       if (_imageFile != null) {
         final uploadedUrl = await _uploadImage();
@@ -207,11 +206,10 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
         }
       }
 
-      // 2. Handle Video (Upload File OR Use YouTube Link)
+      // Handle Video (File or YouTube link)
       String finalVideoUrl = _videoUrlController.text;
 
-      // Only upload if a FILE was actually picked. 
-      // If _videoFile is null, we assume the user typed a YouTube link in the text box.
+      
       if (_videoFile != null) {
         final uploadedVideoUrl = await _uploadVideo();
         if (uploadedVideoUrl != null) {
@@ -297,7 +295,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               
-              // --- 1. IMAGE PICKER ---
+              // --- IMAGE PICKER ---
               const Text("Machine Image", style: TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
               GestureDetector(
@@ -399,25 +397,23 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               ),
               const SizedBox(height: 15),
 
-              // --- 2. VIDEO INPUT (File OR Link) ---
+              // --- VIDEO INPUT ---
               const Text("Machine Video", style: TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
               
               TextFormField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
-                // Allow typing; show upload button as an option
                 decoration: _inputDecoration("Video URL (YouTube) or Pick File").copyWith(
                   hintText: "https://youtube.com/...",
                   hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.upload_file, color: Color(0xFFD0FD3E)), // kPrimaryColor
+                    icon: const Icon(Icons.upload_file, color: kPrimaryColor), 
                     tooltip: "Pick Video File",
                     onPressed: _pickVideo, 
                   ),
                 ),
                 onChanged: (value) {
-                  // If user starts typing manually, clear the picked file so we don't accidentally upload it
                   if (_videoFile != null) {
                     setState(() {
                       _videoFile = null;

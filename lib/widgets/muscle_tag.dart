@@ -31,7 +31,7 @@ class MuscleTag extends StatelessWidget {
               );
             },
       child: Container(
-        // 1. ADD FIXED WIDTH HERE
+    
         width: 110, 
         
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -51,14 +51,12 @@ class MuscleTag extends StatelessWidget {
           ],
         ),
         child: Row(
-          // 2. CENTER THE CONTENT INSIDE THE FIXED WIDTH
           mainAxisAlignment: MainAxisAlignment.center, 
           children: [
             if (isActive) ...[
               const Icon(Icons.check_circle, size: 14, color: Colors.black),
               const SizedBox(width: 6),
             ],
-            // 3. WRAP TEXT IN FLEXIBLE TO PREVENT OVERFLOW ON SMALL BUTTONS
             Flexible(
               child: Text(
                 label.toUpperCase(),
@@ -67,7 +65,7 @@ class MuscleTag extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                   color: isActive ? Colors.black : Colors.white, 
-                  overflow: TextOverflow.ellipsis, // Adds "..." if text is too long
+                  overflow: TextOverflow.ellipsis, 
                 ),
               ),
             ),

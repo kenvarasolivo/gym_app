@@ -373,8 +373,8 @@ class AuthService {
     // Insert new profile
     await _client.from('profiles').insert({
       'username': username.trim(),
-      'password': password, // Note: In production, use hashing!
-      'verified': false,    // Default to non-admin
+      'password': password, 
+      'verified': false,    
     });
   }
 

@@ -17,7 +17,6 @@ class _YouTubeVideoPlayerState extends State<YouTubeVideoPlayer> {
   void initState() {
     super.initState();
     
-    // 1. Initialize Controller
     _controller = YoutubePlayerController.fromVideoId(
       videoId: _extractVideoId(widget.videoUrl),
       autoPlay: false,
@@ -31,22 +30,18 @@ class _YouTubeVideoPlayerState extends State<YouTubeVideoPlayer> {
     );
   }
 
-  // Helper to extract ID from various YouTube URL formats
   String _extractVideoId(String url) {
-// Use the static helper provided by the package
   final id = YoutubePlayerController.convertUrlToId(url);
   if (id != null && id.length == 11) return id;
   
-  // Manual fallback for shorts or unusual formats
+
   if (url.contains('/shorts/')) {
     final parts = url.split('/shorts/');
     if (parts.length > 1) {
-      // Returns the ID and removes any trailing query parameters like ?cbrd=1
       return parts[1].split('?')[0].split('&')[0];
     }
   }
   
- // 3. Last resort: if the URL is already just an 11-char ID
   if (url.trim().length == 11) return url.trim();
   
   return '';
@@ -54,7 +49,6 @@ class _YouTubeVideoPlayerState extends State<YouTubeVideoPlayer> {
 
   @override
   void dispose() {
-    // The iframe controller cleans itself up, but we can close it if needed
     _controller.close();
     super.dispose();
   }

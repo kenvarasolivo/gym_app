@@ -24,7 +24,6 @@ class BodyMapScreen extends StatefulWidget {
 class _BodyMapScreenState extends State<BodyMapScreen> {
   // 0 = Anterior, 1 = Posterior, 2 = Create (only if verified)
   int _currentViewIndex = 0;
-  // Set of muscle groups that have machines in the DB
   Set<String> _availableGroups = {};
   Timer? _pollTimer;
 
@@ -32,7 +31,7 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
   void initState() {
     super.initState();
     _fetchAvailableGroups();
-    // Poll periodically so UI updates without hot reload when DB changes
+    // periodic poll to update ui
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchAvailableGroups());
   }
 
@@ -59,13 +58,11 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
   Widget build(BuildContext context) {
     final bool isAnterior = _currentViewIndex == 0;
 
-    // If verified and "Create" tab selected -> show create screen
     if (widget.isVerified && _currentViewIndex == 2) {
       return MachineManagementScreen(
         userId: widget.userId,
-        isVerified: widget.isVerified, // Pass this so the navbar knows to show 3 items
+        isVerified: widget.isVerified, 
         onTabSelected: (index) {
-          // This allows the MachineManagementScreen navbar to switch views
           setState(() => _currentViewIndex = index);
         },
       );
@@ -90,12 +87,6 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
             } catch (_) {}
           },
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.grey),
-            onPressed: () {},
-          )
-        ],
         title: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

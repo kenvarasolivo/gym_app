@@ -55,9 +55,8 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
     }
   }
 
-  // --- NEW: Helper to format "4x12" into "4 Sets x 12 Reps..." ---
+
   String _formatSetsReps(String raw) {
-    // Regex to look for "Number x Number" (e.g., 4x12 or 4 x 12)
     final regex = RegExp(r'^(\d+)\s*x\s*(\d+)$');
     final match = regex.firstMatch(raw.trim());
 
@@ -67,7 +66,6 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
       return "$sets Sets x $reps Reps (Recommended)";
     }
     
-    // If it doesn't match (e.g., implies it's already formatted or empty), return as is
     return raw; 
   }
 
@@ -107,7 +105,6 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
           final instructionsText = detail?['instructions'] ?? "";
           final difficulty = detail?['difficulty'] ?? "General";
           
-          // --- CHANGED: Get raw string and apply formatting ---
           final rawSetsReps = detail?['sets_reps'] ?? "3x12"; 
           final formattedSetsReps = _formatSetsReps(rawSetsReps);
 
@@ -172,9 +169,8 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                     const Icon(Icons.fitness_center,
                         color: kPrimaryColor, size: 18),
                     const SizedBox(width: 5),
-                    
-                    // --- CHANGED: Use the formatted string here ---
-                    Flexible( // Added Flexible to prevent overflow if text is long
+        
+                    Flexible( 
                       child: Text(formattedSetsReps,
                           style: const TextStyle(
                               color: kPrimaryColor, fontWeight: FontWeight.bold)),

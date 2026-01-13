@@ -101,7 +101,6 @@ class _MachineListScreenState extends State<MachineListScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // If the 'icon' field actually contains a video URL, open a player.
             if (imgUrl.isNotEmpty && _isYouTubeUrl(imgUrl)) {
               Navigator.push(
                 context,
@@ -137,8 +136,7 @@ class _MachineListScreenState extends State<MachineListScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                // NOW 'machine' exists and can be passed correctly
-                builder: (_) => MachineDetailScreen(machineData: machine),
+              builder: (_) => MachineDetailScreen(machineData: machine),
               ),
             );
           },

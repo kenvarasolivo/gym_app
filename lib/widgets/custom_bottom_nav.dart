@@ -35,7 +35,6 @@ class CustomBottomNav extends StatelessWidget {
       );
     }
 
-    // Safety: ensure index doesn't crash if verified status changes
     int safeIndex = currentIndex;
     if (safeIndex >= items.length) {
       safeIndex = 0;
@@ -49,7 +48,7 @@ class CustomBottomNav extends StatelessWidget {
       child: BottomNavigationBar(
         currentIndex: safeIndex,
         onTap: onTap,
-        selectedItemColor: kPrimaryColor, // Ensure this constant exists
+        selectedItemColor: kPrimaryColor, 
         unselectedItemColor: Colors.grey,
         backgroundColor: kBackgroundColor,
         type: BottomNavigationBarType.fixed,
