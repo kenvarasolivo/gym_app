@@ -25,25 +25,39 @@ class _MachineListScreenState extends State<MachineListScreen> {
     _fetchMachines();
   }
 
-  Future<void> _fetchMachines() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  String? _selectedDifficulty;
+  bool _sortAscending = true;
 
-    try {
-      final res = await supabase
-          .from('machine_list')
-          .select('id, name, icon, musclegroup')
-          .eq('musclegroup', widget.muscleGroup);
+Future<void> _fetchMachines() async {
+  setState(() => _loading = true);
 
-      _machines = res.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        } catch (e) {
-      _error = e.toString();
-    } finally {
-      if (mounted) setState(() => _loading = false);
+  try {
+    var query = supabase
+        .from('machine_list')
+        .select('id, name, icon, musclegroup, machine_detail!inner(difficulty)') // Join detail table
+        .eq('musclegroup', widget.muscleGroup);
+
+  
+    final difficultyFilter = _selectedDifficulty;
+
+    if (difficultyFilter != null) {
+      query = query.eq('machine_detail.difficulty', difficultyFilter);
     }
+
+    // Apply Sorting by Name
+    final res = await query.order('name', ascending: _sortAscending);
+
+    setState(() {
+      _machines = res.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      _loading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _loading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +72,41 @@ class _MachineListScreenState extends State<MachineListScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+    PopupMenuButton<String>(
+      icon: const Icon(Icons.filter_list, color: Colors.white),
+      onSelected: (value) {
+        if (value == 'sort') {
+          setState(() {
+            _sortAscending = !_sortAscending; // Toggle order
+          });
+        } else {
+          setState(() {
+            // If same difficulty is pressed, clear filter; otherwise set it
+            _selectedDifficulty = (_selectedDifficulty == value) ? null : value;
+          });
+        }
+        _fetchMachines();
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'sort',
+          child: Row(
+            children: [
+              Icon(_sortAscending ? Icons.sort_by_alpha : Icons.text_rotate_vertical, color: Colors.black),
+              const SizedBox(width: 8),
+              Text(_sortAscending ? "Sort: Z-A" : "Sort: A-Z"),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(enabled: false, child: Text("Difficulty", style: TextStyle(fontWeight: FontWeight.bold))),
+        _buildDifficultyItem("Beginner"),
+        _buildDifficultyItem("Intermediate"),
+        _buildDifficultyItem("Advanced"),
+      ],
+    ),
+  ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(kPadding),
@@ -174,5 +223,21 @@ class _MachineListScreenState extends State<MachineListScreen> {
     final lower = url.toLowerCase();
     return lower.endsWith('.mp4') || lower.endsWith('.mov') || lower.endsWith('.webm') || lower.endsWith('.mkv');
   }
+
+  PopupMenuItem<String> _buildDifficultyItem(String level) {
+  return PopupMenuItem(
+    value: level,
+    child: Row(
+      children: [
+        Icon(
+          _selectedDifficulty == level ? Icons.check_box : Icons.check_box_outline_blank,
+          color: kPrimaryColor,
+        ),
+        const SizedBox(width: 8),
+        Text(level),
+      ],
+    ),
+  );
+}
 
 }
