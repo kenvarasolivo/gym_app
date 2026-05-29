@@ -343,7 +343,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
               const SizedBox(height: 15),
 
               DropdownButtonFormField<String>(
-                value: _selectedMuscleGroup,
+                initialValue: _selectedMuscleGroup,
                 dropdownColor: const Color(0xFF1C1C1E),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Muscle Group"),
@@ -375,7 +375,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedDifficulty,
+                      initialValue: _selectedDifficulty,
                       dropdownColor: const Color(0xFF1C1C1E),
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration("Difficulty"),

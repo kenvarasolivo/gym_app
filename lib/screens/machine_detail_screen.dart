@@ -39,7 +39,22 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
         .select()
         .eq('machine_id', widget.machineData['id'])
         .maybeSingle();
-    return response;
+
+    final creatorId = widget.machineData['creator_id'];
+    String? creatorName;
+    if (creatorId != null) {
+      final creatorRow = await Supabase.instance.client
+          .from('profiles')
+          .select('username')
+          .eq('id', creatorId)
+          .maybeSingle();
+      creatorName = creatorRow?['username'];
+    }
+
+    final result = <String, dynamic>{};
+    if (response != null) result.addAll(response);
+    result['_creator_name'] = creatorName;
+    return result;
   }
 
   Future<void> _launchVideo(String url) async {
@@ -71,7 +86,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final machineName = widget.machineData['name'];
+    final machineName = widget.machineData['name'] ?? 'Unknown Machine';
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -100,12 +115,13 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
           }
 
           final detail = snapshot.data;
-          
+
           final description = detail?['description'] ?? "No description available yet.";
           final instructionsText = detail?['instructions'] ?? "";
           final difficulty = detail?['difficulty'] ?? "General";
-          
-          final rawSetsReps = detail?['sets_reps'] ?? "3x12"; 
+          final creatorName = detail?['_creator_name'] as String?;
+
+          final rawSetsReps = detail?['sets_reps'] ?? "3x12";
           final formattedSetsReps = _formatSetsReps(rawSetsReps);
 
           final videoUrl = detail?['video'];
@@ -151,9 +167,24 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
-                
+
+                if (creatorName != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.person_outline_rounded, color: Colors.grey, size: 15),
+                      const SizedBox(width: 5),
+                      const Text('Created by ', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                      Text(
+                        creatorName,
+                        style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+
                 const SizedBox(height: 15),
-                
+
                 Row(
                   children: [
                     Container(

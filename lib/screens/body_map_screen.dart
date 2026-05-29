@@ -4,17 +4,21 @@ import 'dart:async';
 
 import './login_screen.dart';
 import './machine_management_screen.dart';
+import './profile_screen.dart';
+import '../core/constants.dart';
 import '../widgets/muscle_tag.dart';
-import '../widgets/custom_bottom_nav.dart'; // <--- Import the widget
+import '../widgets/custom_bottom_nav.dart';
 
 class BodyMapScreen extends StatefulWidget {
   final String userId;
   final bool isVerified;
+  final String username;
 
   const BodyMapScreen({
     super.key,
     this.userId = '',
     this.isVerified = false,
+    this.username = '',
   });
 
   @override
@@ -87,6 +91,36 @@ class _BodyMapScreenState extends State<BodyMapScreen> {
             } catch (_) {}
           },
         ),
+        actions: [
+          if (widget.userId.isNotEmpty && widget.userId != 'guest')
+            Padding(
+              padding: const EdgeInsets.only(right: 14),
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileScreen(
+                      userId: widget.userId,
+                      username: widget.username,
+                      isVerified: widget.isVerified,
+                    ),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 19,
+                  backgroundColor: kPrimaryColor.withAlpha(25),
+                  child: Text(
+                    widget.username.isNotEmpty ? widget.username[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
         title: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

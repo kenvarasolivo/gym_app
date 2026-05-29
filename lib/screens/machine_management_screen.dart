@@ -114,9 +114,13 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
                 color: const Color(0xFF1C1C1E),
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(
-                  leading: machine['icon'] != null && machine['icon'].isNotEmpty
-                    ? Image.network(machine['icon'], width: 50, height: 50, fit: BoxFit.cover)
-                    : const Icon(Icons.fitness_center, color: Colors.white),
+                  leading: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: machine['icon'] != null && (machine['icon'] as String).isNotEmpty
+                      ? Image.network(machine['icon'], fit: BoxFit.cover)
+                      : const Icon(Icons.fitness_center, color: Colors.white),
+                  ),
                   title: Text(machine['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
                   subtitle: Text(machine['musclegroup'] ?? 'No Group', style: const TextStyle(color: Colors.grey)),
                   trailing: Row(

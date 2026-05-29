@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context) => BodyMapScreen(
             userId: profile['id'].toString(),
             isVerified: (profile['verified'] as bool?) ?? false,
+            username: profile['username']?.toString() ?? '',
           ),
         ),
       );
