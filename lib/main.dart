@@ -7,8 +7,8 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: 'https://nohtbajprkcfgdtjshfc.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vaHRiYWpwcmtjZmdkdGpzaGZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTMxMTIsImV4cCI6MjA4MzcyOTExMn0.kAbk9eiAvVBn6b28jl6qfg1_DWIeIgI_rjsF1kuPTio',
+    url: 'https://mfgzydsbbsmxybyxeytn.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZ3p5ZHNiYnNteHlieXhleXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTQ2MzksImV4cCI6MjA5NTYzMDYzOX0.nBaDZqEpr0QgWq_prz9bhSWlJuR8R6uUX7wDN_Htjx4',
   );
 
   runApp(const GymMachineApp());
