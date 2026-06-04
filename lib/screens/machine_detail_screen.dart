@@ -163,88 +163,79 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                 Text(
                   machineName,
                   style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: 0.3),
                 ),
 
                 if (creatorName != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded, color: Colors.grey, size: 15),
+                      const Icon(Icons.person_outline_rounded, color: kMutedText, size: 15),
                       const SizedBox(width: 5),
-                      const Text('Created by ', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                      const Text('Created by ', style: TextStyle(color: kMutedText, fontSize: 13)),
                       Text(
                         creatorName,
-                        style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
                 ],
 
-                const SizedBox(height: 15),
+                const SizedBox(height: 18),
 
+                // Stat chips
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(26),
-                        borderRadius: BorderRadius.circular(8),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.signal_cellular_alt_rounded,
+                        label: 'Difficulty',
+                        value: difficulty,
                       ),
-                      child: Text(difficulty,
-                          style: const TextStyle(color: Colors.white70)),
                     ),
-                    const SizedBox(width: 15),
-                    const Icon(Icons.fitness_center,
-                        color: kPrimaryColor, size: 18),
-                    const SizedBox(width: 5),
-        
-                    Flexible( 
-                      child: Text(formattedSetsReps,
-                          style: const TextStyle(
-                              color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.replay_rounded,
+                        label: 'Sets & Reps',
+                        value: formattedSetsReps.replaceAll(' (Recommended)', ''),
+                        highlight: true,
+                      ),
                     ),
                   ],
                 ),
-                
-                const SizedBox(height: 30),
+
+                const SizedBox(height: 28),
 
                 // Description
-                const Text("DESCRIPTION",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                        letterSpacing: 1)),
-                const SizedBox(height: 10),
+                const Text("DESCRIPTION", style: kSectionLabel),
+                const SizedBox(height: 12),
                 Text(
                   description,
                   style: TextStyle(
                       color: Colors.white.withAlpha(204),
                       height: 1.6,
-                      fontSize: 16),
+                      fontSize: 15),
                 ),
-                
-                const SizedBox(height: 30),
 
                 // Instructions
                 if (instructionSteps.isNotEmpty) ...[
-                  const Text("INSTRUCTIONS",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                          letterSpacing: 1)),
-                  const SizedBox(height: 20),
-                  
+                  const SizedBox(height: 30),
+                  const Text("INSTRUCTIONS", style: kSectionLabel),
+                  const SizedBox(height: 18),
                   ...instructionSteps.asMap().entries.map((entry) {
-                    int index = entry.key + 1;
-                    String stepText = entry.value;
-                    return _buildStep(index, stepText);
+                    return _buildStep(
+                      entry.key + 1,
+                      entry.value,
+                      isLast: entry.key == instructionSteps.length - 1,
+                    );
                   }),
                 ],
+                const SizedBox(height: 20),
               ],
             ),
           );
@@ -253,28 +244,106 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
     );
   }
 
-  Widget _buildStep(int number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+  Widget _buildStep(int number, String text, {bool isLast = false}) {
+    return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: kCardColor, 
-            child: Text(
-              "$number",
-              style: const TextStyle(
-                  fontSize: 12,
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.bold),
+          Column(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withAlpha(30),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: kPrimaryColor.withAlpha(120)),
+                ),
+                child: Text(
+                  "$number",
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              // Connecting line between steps
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    color: Colors.white.withAlpha(20),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 22, top: 3),
+              child: Text(text,
+                  style: TextStyle(
+                      height: 1.45,
+                      fontSize: 15,
+                      color: Colors.white.withAlpha(230))),
             ),
           ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Text(text,
-                style: TextStyle(
-                    height: 1.4, color: Colors.white.withAlpha(230))),
+        ],
+      ),
+    );
+  }
+}
+
+// Compact stat card used in the detail header (difficulty / sets & reps).
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool highlight;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 15, color: highlight ? kPrimaryColor : kMutedText),
+              const SizedBox(width: 6),
+              Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                    color: kMutedText,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: highlight ? kPrimaryColor : Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

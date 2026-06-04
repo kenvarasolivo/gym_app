@@ -53,120 +53,194 @@ class _MachineManagementScreenState extends State<MachineManagementScreen> {
 
     try {
       await _supabase.from('machine_list').delete().eq('id', id);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Machine deleted')));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
+  }
+
+  void _openEditor(Map<String, dynamic>? machine) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMachineScreen(
+          userId: widget.userId,
+          machineData: machine,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), 
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        title: const Text("Manage Machines"),
-        backgroundColor: const Color(0xFF121212),
+        title: const Text(
+          "MANAGE MACHINES",
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            letterSpacing: 1,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: kBackgroundColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => widget.onTabSelected(0), 
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => widget.onTabSelected(0),
         ),
       ),
 
       // --- USE THE CUSTOM NAVBAR ---
       bottomNavigationBar: CustomBottomNav(
-        currentIndex: 2, 
-        isVerified: widget.isVerified, 
+        currentIndex: 2,
+        isVerified: widget.isVerified,
         onTap: widget.onTabSelected,
       ),
-      
+
       floatingActionButton: widget.isVerified
           ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddMachineScreen(userId: widget.userId)),
-                );
-              },
+              onPressed: () => _openEditor(null),
               label: const Text("Add Machine", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               icon: const Icon(Icons.add, color: Colors.black),
               backgroundColor: kPrimaryColor,
             )
           : null,
-      
+
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _machineStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
           }
-          
+
           final machines = snapshot.data!;
-          
+
           if (machines.isEmpty) {
-            return const Center(child: Text("No machines found.", style: TextStyle(color: Colors.white)));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.inventory_2_outlined, color: kMutedText, size: 48),
+                    SizedBox(height: 16),
+                    Text("No machines yet",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Text("Tap 'Add Machine' to create your first one.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: kMutedText, fontSize: 14)),
+                  ],
+                ),
+              ),
+            );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(kPadding, 8, kPadding, 100),
             itemCount: machines.length,
             itemBuilder: (context, index) {
               final machine = machines[index];
-              return Card(
-                color: const Color(0xFF1C1C1E),
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  leading: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: machine['icon'] != null && (machine['icon'] as String).isNotEmpty
-                      ? Image.network(machine['icon'], fit: BoxFit.cover)
-                      : const Icon(Icons.fitness_center, color: Colors.white),
-                  ),
-                  title: Text(machine['name'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
-                  subtitle: Text(machine['musclegroup'] ?? 'No Group', style: const TextStyle(color: Colors.grey)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddMachineScreen(
-                                userId: widget.userId,
-                                machineData: machine,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      if (widget.isVerified) ...[
-                        const SizedBox(width: 6),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
-                          onPressed: () => _confirmDelete(machine['id'], machine['name'] ?? 'Unknown'),
-                        ),
-                      ],
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AddMachineScreen(
-                          userId: widget.userId,
-                          machineData: machine,
-                          
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
+              return _buildMachineTile(machine);
             },
           );
         },
       ),
+    );
+  }
+
+  Widget _buildMachineTile(Map<String, dynamic> machine) {
+    final icon = machine['icon'];
+    final hasImage = icon != null && (icon as String).isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: kCardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorderColor),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openEditor(machine),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: hasImage
+                        ? Image.network(
+                            icon,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stack) =>
+                                _iconFallback(),
+                          )
+                        : _iconFallback(),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        machine['name'] ?? 'Unknown',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.fitness_center,
+                              size: 12, color: kMutedText),
+                          const SizedBox(width: 5),
+                          Text(
+                            machine['musclegroup'] ?? 'No Group',
+                            style: const TextStyle(color: kMutedText, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
+                  onPressed: () => _openEditor(machine),
+                ),
+                if (widget.isVerified)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFFF6B6B)),
+                    onPressed: () =>
+                        _confirmDelete(machine['id'], machine['name'] ?? 'Unknown'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _iconFallback() {
+    return Container(
+      color: kSurfaceColor,
+      child: const Icon(Icons.fitness_center, color: kMutedText),
     );
   }
 }

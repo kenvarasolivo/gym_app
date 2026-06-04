@@ -279,72 +279,96 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.machineData != null;
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        title: Text(widget.machineData == null ? "Create New Machine" : "Edit Machine"),
-        backgroundColor: const Color(0xFF121212),
-        iconTheme: const IconThemeData(color: Colors.white),
-        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+        title: Text(
+          isEditing ? "EDIT MACHINE" : "CREATE MACHINE",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: kBackgroundColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(kPadding),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              
+
               // --- IMAGE PICKER ---
-              const Text("Machine Image", style: TextStyle(color: Colors.grey, fontSize: 14)),
-              const SizedBox(height: 8),
+              _label("MACHINE IMAGE"),
+              const SizedBox(height: 10),
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
-                  height: 200,
+                  height: 190,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                    color: kCardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: kBorderColor),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(18),
                     child: _imageFile != null
-                        ? (kIsWeb 
-                            ? Image.network(_imageFile!.path, fit: BoxFit.cover) 
+                        ? (kIsWeb
+                            ? Image.network(_imageFile!.path, fit: BoxFit.cover)
                             : Image.file(File(_imageFile!.path), fit: BoxFit.cover))
                         : (_iconUrlController.text.isNotEmpty)
-                            ? Image.network( 
-                                _iconUrlController.text, 
+                            ? Image.network(
+                                _iconUrlController.text,
                                 fit: BoxFit.cover,
-                                errorBuilder: (c, o, s) => const Icon(Icons.broken_image, color: Colors.grey),
+                                errorBuilder: (c, o, s) => const Icon(Icons.broken_image, color: kMutedText),
                               )
-                            : Column( 
+                            : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.add_a_photo, size: 40, color: Color(0xFFD0FD3E)),
-                                  SizedBox(height: 10),
-                                  Text("Tap to upload image", style: TextStyle(color: Colors.white70)),
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: kPrimaryColor.withAlpha(25),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add_a_photo_outlined,
+                                        size: 28, color: kPrimaryColor),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text("Tap to upload image",
+                                      style: TextStyle(color: Colors.white70)),
                                 ],
                               ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               // --- TEXT FIELDS ---
+              _label("DETAILS"),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Machine Name"),
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 14),
 
               DropdownButtonFormField<String>(
                 initialValue: _selectedMuscleGroup,
-                dropdownColor: const Color(0xFF1C1C1E),
+                dropdownColor: kCardColor,
+                borderRadius: BorderRadius.circular(14),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Muscle Group"),
                 items: _muscleGroups.map((group) {
@@ -352,7 +376,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedMuscleGroup = val),
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 14),
 
               TextFormField(
                 controller: _descriptionController,
@@ -361,7 +385,7 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 decoration: _inputDecoration("Description"),
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 14),
 
               TextFormField(
                 controller: _instructionsController,
@@ -369,14 +393,15 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                 maxLines: 6,
                 decoration: _inputDecoration("Step-by-step Instructions"),
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 14),
 
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedDifficulty,
-                      dropdownColor: const Color(0xFF1C1C1E),
+                      dropdownColor: kCardColor,
+                      borderRadius: BorderRadius.circular(14),
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration("Difficulty"),
                       items: _difficultyLevels.map((level) {
@@ -385,32 +410,31 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                       onChanged: (val) => setState(() => _selectedDifficulty = val),
                     ),
                   ),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: TextFormField(
                       controller: _setsRepsController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: _inputDecoration("Sets & Reps (e.g. 3x12)"),
+                      decoration: _inputDecoration("Sets & Reps"),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 24),
 
               // --- VIDEO INPUT ---
-              const Text("Machine Video", style: TextStyle(color: Colors.grey, fontSize: 14)),
-              const SizedBox(height: 8),
-              
+              _label("MACHINE VIDEO"),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Video URL (YouTube) or Pick File").copyWith(
+                decoration: _inputDecoration("Video URL or pick a file").copyWith(
                   hintText: "https://youtube.com/...",
-                  hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
+                  hintStyle: const TextStyle(color: kMutedText),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.upload_file, color: kPrimaryColor), 
+                    icon: const Icon(Icons.upload_file, color: kPrimaryColor),
                     tooltip: "Pick Video File",
-                    onPressed: _pickVideo, 
+                    onPressed: _pickVideo,
                   ),
                 ),
                 onChanged: (value) {
@@ -421,24 +445,37 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
                   }
                 },
               ),
-              
-              const SizedBox(height: 40),
+
+              const SizedBox(height: 32),
 
               // --- SUBMIT BUTTON ---
               SizedBox(
-                height: 50,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD0FD3E),
+                    backgroundColor: kPrimaryColor,
                     foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: _isLoading 
-                    ? const CircularProgressIndicator()
-                    : Text(widget.machineData == null ? "CREATE MACHINE" : "UPDATE MACHINE", 
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black),
+                        )
+                      : Text(isEditing ? "UPDATE MACHINE" : "CREATE MACHINE",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              letterSpacing: 0.5)),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -446,17 +483,19 @@ class _AddMachineScreenState extends State<AddMachineScreen> {
     );
   }
 
+  Widget _label(String text) => Text(text, style: kSectionLabel);
+
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.grey),
+      labelStyle: const TextStyle(color: kMutedText),
       filled: true,
-      fillColor: const Color(0xFF1C1C1E),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      fillColor: kCardColor,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10), 
-        borderSide: const BorderSide(color: Color(0xFFD0FD3E), width: 1)
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
       ),
     );
   }

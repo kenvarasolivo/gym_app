@@ -134,6 +134,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: kPrimaryColor, width: 2.5),
                           color: kCardColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: kPrimaryColor.withAlpha(60),
+                              blurRadius: 24,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
                         child: ClipOval(
                           child: _isUploading
@@ -288,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withAlpha(8)),
+        border: Border.all(color: kBorderColor),
       ),
       child: Row(
         children: [
