@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'core/constants.dart';
 import 'screens/login_screen.dart';
@@ -39,6 +40,29 @@ class GymMachineApp extends StatelessWidget {
         ),
       ),
       home: const LoginScreen(),
+      builder: (context, child) {
+        // On the web demo, constrain the app to a phone-sized frame
+        // and center it so it doesn't stretch across the whole browser.
+        if (!kIsWeb) return child ?? const SizedBox.shrink();
+        const phoneWidth = 412.0;
+        final mq = MediaQuery.of(context);
+        return ColoredBox(
+          color: const Color(0xFF000000),
+          child: Center(
+            child: ClipRect(
+              child: SizedBox(
+                width: phoneWidth,
+                child: MediaQuery(
+                  // Report the constrained width so responsive widgets
+                  // inside the app behave like they're on a phone.
+                  data: mq.copyWith(size: Size(phoneWidth, mq.size.height)),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
